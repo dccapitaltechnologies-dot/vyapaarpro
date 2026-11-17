@@ -1,147 +1,158 @@
 import { useEffect, useState } from 'react'
-import { Logo, LogoMark } from './Logo'
+import { ArrowUpRight, Menu } from 'lucide-react'
+
+import { Button } from './ui/button'
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet'
+import { Wordmark } from './Wordmark'
+import { cn } from '../lib/utils'
+import { NAV_LINKS, SITE } from '../content/site'
 import { useScrollSpy } from '../hooks/useScrollSpy'
 
-const LINKS = [
-  { label: 'Listings', href: '#listings' },
-  { label: 'About', href: '#about' },
-  { label: 'Brokers', href: '#brokers' },
-  { label: 'Contact', href: '#contact' },
-] as const
-
-const SECTION_IDS = LINKS.map((l) => l.href.slice(1))
+const SPY_IDS = NAV_LINKS.map((link) => link.id)
 
 export function Navbar() {
-  const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const activeId = useScrollSpy(SECTION_IDS)
+  const [open, setOpen] = useState(false)
+  const activeId = useScrollSpy(SPY_IDS)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12)
+    const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', onKey)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [open])
-
   return (
-    <>
-      <header
-        className={`sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow,backdrop-filter] duration-500 ${
-          scrolled
-            ? 'border-line/80 bg-paper/85 shadow-[0_1px_0_rgb(23_21_18/0.04),0_12px_32px_-24px_rgb(23_21_18/0.45)] backdrop-blur-xl backdrop-saturate-150'
-            : 'border-transparent bg-transparent'
-        }`}
-      >
-        <nav
-          aria-label="Primary"
-          className={`mx-auto flex w-full max-w-[1320px] items-center justify-between gap-6 px-[var(--space-gutter)] transition-[height] duration-500 sm:px-8 lg:px-10 ${
-            scrolled ? 'h-[62px]' : 'h-[76px]'
-          }`}
-        >
-          <Logo />
+    <header
+      className={cn(
+        'fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow,border-color] duration-500',
+        scrolled
+          ? 'border-b border-line/80 bg-bone/86 shadow-[0_1px_0_rgba(220,213,197,0.7)] backdrop-blur-xl'
+          : 'border-b border-transparent bg-transparent',
+      )}
+    >
+      <div className="mx-auto flex h-[4.5rem] w-full max-w-[86rem] items-center justify-between gap-6 px-[var(--spacing-gutter)] lg:h-20">
+        <a href="#top" aria-label={`${SITE.name} — back to top`} className="shrink-0">
+          <Wordmark />
+        </a>
 
-          {/* Desktop links */}
-          <div className="hidden items-center gap-8 md:flex">
-            {LINKS.map((l) => {
-              const isActive = activeId === l.href.slice(1)
+        {/* Desktop nav */}
+        <nav aria-label="Primary" className="hidden lg:block">
+          <ul className="flex items-center gap-1">
+            {NAV_LINKS.map((link) => {
+              const isActive = activeId === link.id
               return (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  aria-current={isActive ? 'true' : undefined}
-                  data-active={isActive}
-                  className={`link-underline text-[13px] font-medium transition-colors duration-300 ${
-                    isActive ? 'text-ink' : 'text-ink-3 hover:text-ink'
-                  }`}
-                >
-                  {l.label}
-                </a>
+                <li key={link.id}>
+                  <a
+                    href={`#${link.id}`}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={cn(
+                      'relative block px-3.5 py-2 text-[12.5px] tracking-[0.01em] transition-colors duration-300',
+                      isActive ? 'text-forest' : 'text-ink-3 hover:text-forest',
+                    )}
+                  >
+                    {link.label}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'absolute inset-x-3.5 -bottom-0.5 h-px origin-left bg-brass transition-transform duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]',
+                        isActive ? 'scale-x-100' : 'scale-x-0',
+                      )}
+                    />
+                  </a>
+                </li>
               )
             })}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <a href="#contact" className="btn btn--solid hidden sm:inline-flex">
-              Book a viewing
-            </a>
-            <button
-              onClick={() => setOpen(true)}
-              aria-label="Open menu"
-              aria-expanded={open}
-              className="group flex cursor-pointer items-center gap-2 rounded-full border border-ink/15 bg-paper/40 px-4 py-2.5 text-[13px] font-medium text-ink transition-colors duration-300 hover:border-ink/35 hover:bg-paper/80 md:hidden"
-            >
-              <span className="flex flex-col gap-[3px]" aria-hidden>
-                <span className="block h-px w-4 bg-ink transition-transform duration-300 group-hover:translate-x-0.5" />
-                <span className="block h-px w-4 bg-ink transition-transform duration-300 group-hover:-translate-x-0.5" />
-              </span>
-              Menu
-            </button>
-          </div>
+          </ul>
         </nav>
-      </header>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-ink text-paper">
-          <div className="grain pointer-events-none absolute inset-0" aria-hidden />
-          <div className="relative mx-auto flex h-[76px] w-full max-w-[1320px] items-center justify-between px-5 sm:px-8 lg:px-10">
-            <div className="flex items-center gap-2">
-              <LogoMark className="h-[18px] w-[18px]" />
-              <span className="text-[15px] font-semibold tracking-[0.18em] uppercase">Lerex</span>
-            </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-full border border-white/20 px-5 py-2 text-[13px] font-medium text-white/90 transition-colors duration-300 hover:border-white/40 hover:bg-white/10"
-              aria-label="Close menu"
-            >
-              Close
-            </button>
-          </div>
-
-          <nav
-            aria-label="Mobile"
-            className="relative mx-auto flex w-full max-w-[1320px] flex-1 flex-col justify-center gap-1 px-5 sm:px-8 lg:px-10"
+        <div className="flex items-center gap-2.5">
+          <a
+            href={`tel:${SITE.phone.replace(/[^\d+]/g, '')}`}
+            className="label hidden text-ink-3 transition-colors hover:text-forest xl:block"
           >
-            {LINKS.map((l, i) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="group flex items-baseline gap-4 border-b border-white/10 py-5 transition-colors hover:text-white"
-                style={{ animation: `rise 0.6s var(--ease-out-expo) ${i * 60}ms both` }}
-              >
-                <span className="tnum text-[12px] text-white/35 transition-colors group-hover:text-accent-soft">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <span className="font-display text-[clamp(2.25rem,8vw,3.5rem)] leading-none tracking-tight">
-                  {l.label}
-                </span>
-                <span
-                  aria-hidden
-                  className="ml-auto text-white/25 transition-all duration-500 group-hover:translate-x-1 group-hover:text-white/70"
-                >
-                  →
-                </span>
-              </a>
-            ))}
-          </nav>
+            {SITE.phone}
+          </a>
 
-          <p className="relative mx-auto w-full max-w-[1320px] px-5 pb-8 text-[12px] text-white/35 sm:px-8 lg:px-10">
-            © 2026 Lerex — real estate, in real time.
-          </p>
+          <Button
+            asChild
+            size="sm"
+            uppercaseTracking
+            className="hidden sm:inline-flex"
+          >
+            <a href="#contact">
+              Book a consultation
+              <ArrowUpRight className="transition-transform duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+            </a>
+          </Button>
+
+          {/* Mobile menu */}
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="size-4.5" strokeWidth={1.5} />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent className="justify-between p-0">
+              <div className="flex flex-col gap-12 px-7 pt-7 pb-10">
+                <SheetTitle className="sr-only">Menu</SheetTitle>
+
+                <nav aria-label="Mobile" className="pt-10">
+                  <ul className="flex flex-col">
+                    {NAV_LINKS.map((link, i) => (
+                      <li key={link.id} className="border-b border-line">
+                        <SheetClose asChild>
+                          <a
+                            href={`#${link.id}`}
+                            className="group flex items-center justify-between gap-4 py-5"
+                          >
+                            <span className="flex items-baseline gap-4">
+                              <span className="num text-[10px] text-brass">
+                                {String(i + 1).padStart(2, '0')}
+                              </span>
+                              <span className="font-display text-[1.65rem] leading-none text-forest transition-colors group-hover:text-brass">
+                                {link.label}
+                              </span>
+                            </span>
+                            <ArrowUpRight className="size-4 text-ink-4 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brass" />
+                          </a>
+                        </SheetClose>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </div>
+
+              <div className="border-t border-line bg-bone-2 px-7 py-6">
+                <p className="label text-ink-4">Office</p>
+                <a
+                  href={`mailto:${SITE.email}`}
+                  className="mt-2 block font-display text-[1.15rem] text-forest"
+                >
+                  {SITE.email}
+                </a>
+                <a
+                  href={`tel:${SITE.phone.replace(/[^\d+]/g, '')}`}
+                  className="num mt-1 block text-[12.5px] text-ink-2"
+                >
+                  {SITE.phone}
+                </a>
+                <SheetClose asChild>
+                  <Button asChild uppercaseTracking className="mt-5 w-full">
+                    <a href="#contact">Book a consultation</a>
+                  </Button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-      )}
-    </>
+      </div>
+    </header>
   )
 }
