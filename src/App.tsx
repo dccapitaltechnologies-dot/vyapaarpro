@@ -1,31 +1,41 @@
+import { TooltipProvider } from './components/ui/tooltip'
 import { Navbar } from './components/Navbar'
-import { ScrollProgress } from './components/ScrollProgress'
 import { Hero } from './components/Hero'
-import { ListingRail } from './components/ListingRail'
-import { About } from './components/About'
-import { Stats } from './components/Stats'
-import { Partners } from './components/Partners'
+import { Collection } from './components/Collection'
+import { Press, Stats, Testimonials } from './components/Proof'
+import { Approach } from './components/Approach'
+import { Services } from './components/Services'
+import { Journal } from './components/Journal'
+import { Contact } from './components/Contact'
 import { Footer } from './components/Footer'
 
 export default function App() {
   return (
-    <div className="min-h-dvh bg-paper text-ink antialiased">
-      <a
-        href="#listings"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-full focus:bg-ink focus:px-5 focus:py-2.5 focus:text-[13px] focus:font-medium focus:text-paper"
-      >
-        Skip to listings
-      </a>
-      <ScrollProgress />
-      <Navbar />
-      <main>
-        <Hero />
-        <ListingRail />
-        <About />
-        <Stats />
-        <Partners />
-      </main>
-      <Footer />
-    </div>
+    <TooltipProvider delayDuration={200}>
+      <div className="min-h-dvh bg-bone text-ink antialiased">
+        <a
+          href="#residences"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-60 focus:rounded-sm focus:bg-forest focus:px-5 focus:py-2.5 focus:text-[12px] focus:tracking-[0.14em] focus:text-bone focus:uppercase"
+        >
+          Skip to residences
+        </a>
+
+        <Navbar />
+
+        <main>
+          <Hero />
+          <Press />
+          <Collection />
+          <Approach />
+          <Stats />
+          <Services />
+          <Testimonials />
+          <Journal />
+          <Contact />
+        </main>
+
+        <Footer />
+      </div>
+    </TooltipProvider>
   )
 }

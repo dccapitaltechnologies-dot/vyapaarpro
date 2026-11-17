@@ -1,49 +1,33 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { ElementType, ReactNode } from 'react'
 
-type RevealProps = {
-  children: ReactNode
-  /** Stagger in ms, applied as a transition-delay. */
-  delay?: number
-  className?: string
-  as?: 'div' | 'section' | 'li' | 'article' | 'figure' | 'header'
-}
+import { cn } from '../lib/utils'
+import { useReveal } from '../hooks/useReveal'
 
 /**
- * Fades and lifts its children into view once, the first time they intersect.
- * Falls back to fully visible when IntersectionObserver is unavailable, and the
- * motion is neutralised by the global prefers-reduced-motion rule in index.css.
+ * Fades and lifts its children into view once.
+ * `delay` staggers siblings without needing a motion library.
  */
-export function Reveal({ children, delay = 0, className = '', as = 'div' }: RevealProps) {
-  const ref = useRef<HTMLElement | null>(null)
-  // Start visible when the observer API is missing, so content never stays hidden.
-  const [visible, setVisible] = useState(
-    () => typeof IntersectionObserver === 'undefined',
-  )
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          io.disconnect()
-        }
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
-
-  const Tag = as as 'div'
+export function Reveal({
+  children,
+  className,
+  delay = 0,
+  as: Tag = 'div',
+  eager = false,
+}: {
+  children: ReactNode
+  className?: string
+  delay?: number
+  as?: ElementType
+  /** Above-the-fold: animate on mount instead of on intersection. */
+  eager?: boolean
+}) {
+  const { ref, isIn } = useReveal<HTMLDivElement>()
 
   return (
     <Tag
-      ref={ref as React.Ref<HTMLDivElement>}
-      className={`reveal ${visible ? 'is-visible' : ''} ${className}`}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+      ref={eager ? undefined : ref}
+      className={cn(eager ? 'enter' : 'reveal', !eager && isIn && 'is-in', className)}
+      style={{ '--reveal-delay': `${delay}ms` } as React.CSSProperties}
     >
       {children}
     </Tag>

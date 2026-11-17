@@ -1,47 +1,46 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Tracks which in-page section is currently in view so the nav can mark it.
- * Returns the section id (without the leading `#`), or null near the top.
- *
- * Uses a coarse rootMargin that biases toward the upper third of the viewport,
- * which matches where people actually read.
+ * Tracks which section id currently sits under the masthead.
+ * Used for the nav's active indicator and the thin scroll rail.
  */
-export function useScrollSpy(ids: readonly string[]) {
-  const [active, setActive] = useState<string | null>(null)
+export function useScrollSpy(ids: readonly string[], offset = 120) {
+  const [activeId, setActiveId] = useState<string>('')
 
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return
+    if (ids.length === 0) return
 
-    const sections = ids
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null)
-    if (sections.length === 0) return
+    let frame = 0
 
-    const visible = new Map<string, number>()
+    const measure = () => {
+      frame = 0
+      let current = ''
+      for (const id of ids) {
+        const el = document.getElementById(id)
+        if (!el) continue
+        if (el.getBoundingClientRect().top - offset <= 0) current = id
+      }
+      // Near the document end, the last section wins even if it is short.
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) {
+        current = ids[ids.length - 1] ?? current
+      }
+      setActiveId(current)
+    }
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          visible.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0)
-        }
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(measure)
+    }
 
-        let best: string | null = null
-        let bestRatio = 0
-        for (const [id, ratio] of visible) {
-          if (ratio > bestRatio) {
-            best = id
-            bestRatio = ratio
-          }
-        }
-        setActive(best)
-      },
-      { threshold: [0, 0.15, 0.35, 0.6, 0.85], rootMargin: '-72px 0px -45% 0px' },
-    )
+    measure()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [ids, offset])
 
-    sections.forEach((el) => io.observe(el))
-    return () => io.disconnect()
-  }, [ids])
-
-  return active
+  return activeId
 }
